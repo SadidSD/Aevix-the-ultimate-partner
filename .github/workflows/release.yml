@@ -27,8 +27,20 @@ jobs:
       - name: Rebuild native modules for Electron
         run: npx electron-rebuild
 
-      - name: Build and publish installer
+      - name: Build installer
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-        run: npx electron-builder --win --x64 --publish always
+        run: npx electron-builder --win --x64 --publish never
+
+      - name: Create GitHub Release and upload installer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $exe = Get-ChildItem dist\*.exe | Select-Object -First 1
+          gh release create $tag $exe.FullName `
+            --repo ${{ github.repository }} `
+            --title "Aevix $tag" `
+            --notes "Download **Aevix-Setup-$tag.exe** to install." `
+            --latest
