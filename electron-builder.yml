@@ -70,6 +70,6 @@ nsis:
 
 publish:
   provider: github
-  owner: sadidbinhasan
-  repo: aevix
+  owner: SadidSD
+  repo: Aevix-the-ultimate-partner
   releaseType: release
