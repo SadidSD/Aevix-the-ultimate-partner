@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AEVIX — Monitor</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --font: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ─── Header ─────────────────────────────────────── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--accent);
+  }
+
+  .logo span { color: var(--muted); font-weight: 400; font-size: 11px; letter-spacing: 1px; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .live-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  .live-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .stat { color: var(--muted); font-size: 11px; }
+  .stat strong { color: var(--text); }
+
+  .nav-link {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 11px;
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  .nav-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ─── Filter Bar ──────────────────────────────────── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .filter-label { color: var(--muted); font-size: 11px; margin-right: 4px; }
+
+  .filter-btn {
+    padding: 3px 10px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #000; font-weight: 700; }
+
+  .clear-btn {
+    margin-left: auto;
+    padding: 3px 12px;
+    border-radius: 3px;
+    border: 1px solid var(--red);
+    background: transparent;
+    color: var(--red);
+    font-family: var(--font);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .clear-btn:hover { background: var(--red); color: #fff; }
+
+  .auto-scroll-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .toggle {
+    width: 28px; height: 14px;
+    background: var(--border);
+    border-radius: 7px;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--muted);
+    top: 2px; left: 2px;
+    transition: all 0.2s;
+  }
+  .toggle.on { background: var(--accent); }
+  .toggle.on::after { left: 16px; background: #000; }
+
+  /* ─── Main Layout ─────────────────────────────────── */
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ─── Event Feed ──────────────────────────────────── */
+  .feed {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .feed::-webkit-scrollbar { width: 4px; }
+  .feed::-webkit-scrollbar-track { background: transparent; }
+  .feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ─── Event Card ──────────────────────────────────── */
+  .event-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    animation: slideIn 0.2s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .event-card.type-chat { border-left: 3px solid var(--accent); }
+  .event-card.type-chat_response { border-left: 3px solid var(--green); }
+  .event-card.type-memory { border-left: 3px solid var(--accent2); }
+  .event-card.type-memory_result { border-left: 3px solid #a78bfa; }
+  .event-card.type-boot { border-left: 3px solid var(--yellow); }
+  .event-card.type-boot_response { border-left: 3px solid var(--yellow); }
+  .event-card.type-checkin { border-left: 3px solid var(--orange); }
+  .event-card.type-checkin_response { border-left: 3px solid var(--orange); }
+  .event-card.type-task_op { border-left: 3px solid var(--green); }
+
+  .event-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    user-select: none;
+    background: var(--surface2);
+  }
+
+  .event-header:hover { background: #1f1f2e; }
+
+  .event-badge {
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+
+  .badge-chat { background: #0e2a33; color: var(--accent); }
+  .badge-chat_response { background: #0a2e1a; color: var(--green); }
+  .badge-memory { background: #1e1030; color: #a78bfa; }
+  .badge-memory_result { background: #1e1030; color: #c4b5fd; }
+  .badge-boot { background: #2a2000; color: var(--yellow); }
+  .badge-boot_response { background: #2a2000; color: var(--yellow); }
+  .badge-checkin { background: #2a1200; color: var(--orange); }
+  .badge-checkin_response { background: #2a1200; color: var(--orange); }
+  .badge-task_op { background: #0a2e1a; color: var(--green); }
+
+  .event-label { flex: 1; color: var(--text); font-size: 12px; }
+  .event-time { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+  .expand-icon { color: var(--muted); font-size: 10px; transition: transform 0.2s; }
+  .expand-icon.open { transform: rotate(90deg); }
+
+  .event-body {
+    display: none;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .event-body.open { display: flex; }
+
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+
+  .prompt-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .prompt-block::-webkit-scrollbar { width: 3px; }
+  .prompt-block::-webkit-scrollbar-thumb { background: var(--border); }
+
+  .response-block {
+    background: #0a1a0a;
+    border: 1px solid #1a3a1a;
+    border-radius: 4px;
+    padding: 10px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #86efac;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  .response-block::-webkit-scrollbar { width: 3px; }
+  .response-block::-webkit-scrollbar-thumb { background: #1a3a1a; }
+
+  .meta-block {
+    background: #0f0a1a;
+    border: 1px solid #2a1a4a;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 11px;
+    color: #c4b5fd;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .task-block {
+    background: #0a1a0f;
+    border: 1px solid #1a4a2a;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--green);
+  }
+
+  /* ─── Sidebar ─────────────────────────────────────── */
+  .sidebar {
+    width: 260px;
+    border-left: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .stat-row strong { color: var(--text); }
+
+  .task-item {
+    padding: 4px 0;
+    font-size: 11px;
+    color: var(--text);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .task-item::before { content: '▸'; color: var(--accent); flex-shrink: 0; }
+  .task-item:last-child { border-bottom: none; }
+
+  .no-tasks { color: var(--muted); font-size: 11px; font-style: italic; }
+
+  .token-bar-wrap { margin-top: 4px; }
+  .token-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .token-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .token-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+  .fill-chat { background: var(--accent); }
+  .fill-memory { background: var(--accent2); }
+  .fill-boot { background: var(--yellow); }
+  .fill-checkin { background: var(--orange); }
+
+  /* ─── Empty State ─────────────────────────────────── */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--muted);
+    gap: 8px;
+  }
+  .empty-state .icon { font-size: 32px; opacity: 0.3; }
+  .empty-state p { font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    ⬡ AEVIX <span>/ MONITOR</span>
+  </div>
+  <div class="status-bar">
+    <div class="live-dot" id="live-dot"></div>
+    <span class="stat" id="conn-status">CONNECTING</span>
+    <span class="stat">Events: <strong id="event-count">0</strong></span>
+    <span class="stat">LLM Calls: <strong id="llm-count">0</strong></span>
+    <a href="/" class="nav-link">← Main HUD</a>
+  </div>
+</header>
+
+<div class="filter-bar">
+  <span class="filter-label">FILTER:</span>
+  <button class="filter-btn active" data-filter="all">All</button>
+  <button class="filter-btn" data-filter="chat">Chat</button>
+  <button class="filter-btn" data-filter="memory">Memory</button>
+  <button class="filter-btn" data-filter="boot">Boot</button>
+  <button class="filter-btn" data-filter="checkin">Check-In</button>
+  <button class="filter-btn" data-filter="task_op">Tasks</button>
+  <label class="auto-scroll-toggle" title="Auto-scroll to newest events">
+    <div class="toggle on" id="scroll-toggle"></div>
+    Auto-scroll
+  </label>
+  <button class="clear-btn" id="clear-btn">Clear</button>
+</div>
+
+<div class="main">
+  <div class="feed" id="feed">
+    <div class="empty-state" id="empty-state">
+      <div class="icon">◎</div>
+      <p>Waiting for LLM activity…</p>
+      <p style="font-size:10px">Send a message in the main HUD to see events appear here.</p>
+    </div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Session Stats</div>
+      <div class="stat-row">Chat calls <strong id="s-chat">0</strong></div>
+      <div class="stat-row">Memory syncs <strong id="s-memory">0</strong></div>
+      <div class="stat-row">Boot briefings <strong id="s-boot">0</strong></div>
+      <div class="stat-row">Check-ins <strong id="s-checkin">0</strong></div>
+      <div class="stat-row">Task ops <strong id="s-task">0</strong></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-title">Call Distribution</div>
+      <div class="token-bar-wrap">
+        <div class="token-bar-label"><span>Chat</span><span id="pct-chat">0%</span></div>
+        <div class="token-bar"><div class="token-bar-fill fill-chat" id="bar-chat" style="width:0%"></div></div>
+        <div class="token-bar-label"><span>Memory</span><span id="pct-memory">0%</span></div>
+        <div class="token-bar"><div class="token-bar-fill fill-memory" id="bar-memory" style="width:0%"></div></div>
+        <div class="token-bar-label"><span>Boot</span><span id="pct-boot">0%</span></div>
+        <div class="token-bar"><div class="token-bar-fill fill-boot" id="bar-boot" style="width:0%"></div></div>
+        <div class="token-bar-label"><span>Check-In</span><span id="pct-checkin">0%</span></div>
+        <div class="token-bar"><div class="token-bar-fill fill-checkin" id="bar-checkin" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1; overflow-y:auto;">
+      <div class="sidebar-title">Active Tasks</div>
+      <div id="sidebar-tasks"><span class="no-tasks">Loading…</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────
+let allEvents = [];
+let activeFilter = 'all';
+let autoScroll = true;
+let stats = { chat: 0, memory: 0, boot: 0, checkin: 0, task_op: 0 };
+
+const feed = document.getElementById('feed');
+const emptyState = document.getElementById('empty-state');
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+function timeAgo(isoStr) {
+  const diff = Date.now() - new Date(isoStr).getTime();
+  if (diff < 60000) return `${Math.floor(diff / 1000)}s ago`;
+  if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+  return new Date(isoStr).toLocaleTimeString();
+}
+
+function badgeClass(type) {
+  if (type.startsWith('chat')) return type === 'chat' ? 'badge-chat' : 'badge-chat_response';
+  if (type.startsWith('memory')) return type === 'memory' ? 'badge-memory' : 'badge-memory_result';
+  if (type.startsWith('boot')) return 'badge-boot';
+  if (type.startsWith('checkin')) return 'badge-checkin';
+  return 'badge-' + type;
+}
+
+function filterGroup(type) {
+  if (type === 'chat' || type === 'chat_response') return 'chat';
+  if (type === 'memory' || type === 'memory_result') return 'memory';
+  if (type === 'boot' || type === 'boot_response') return 'boot';
+  if (type === 'checkin' || type === 'checkin_response') return 'checkin';
+  if (type === 'task_op') return 'task_op';
+  return 'other';
+}
+
+function truncate(str, n) {
+  if (!str) return '';
+  return str.length > n ? str.slice(0, n) + '…' : str;
+}
+
+// ─── Render Event Card ────────────────────────────────────────────────
+function renderCard(ev) {
+  const card = document.createElement('div');
+  card.className = `event-card type-${ev.type}`;
+  card.dataset.filter = filterGroup(ev.type);
+  card.dataset.id = ev.id;
+
+  const header = document.createElement('div');
+  header.className = 'event-header';
+
+  const badge = document.createElement('span');
+  badge.className = `event-badge ${badgeClass(ev.type)}`;
+  badge.textContent = ev.type.replace('_', ' ').toUpperCase();
+
+  const label = document.createElement('span');
+  label.className = 'event-label';
+  label.textContent = ev.label || ev.type;
+
+  const time = document.createElement('span');
+  time.className = 'event-time';
+  time.textContent = timeAgo(ev.ts);
+
+  const icon = document.createElement('span');
+  icon.className = 'expand-icon';
+  icon.textContent = '▶';
+
+  header.append(badge, label, time, icon);
+
+  const body = document.createElement('div');
+  body.className = 'event-body';
+
+  // System prompt section
+  if (ev.system) {
+    const sl = document.createElement('div');
+    const sp = document.createElement('div');
+    sl.className = 'section-label';
+    sl.textContent = 'System Prompt';
+    sp.className = 'prompt-block';
+    sp.textContent = ev.system;
+    body.append(sl, sp);
+  }
+
+  // User prompt / input
+  if (ev.user) {
+    const ul = document.createElement('div');
+    const up = document.createElement('div');
+    ul.className = 'section-label';
+    ul.textContent = 'User / Input';
+    up.className = 'prompt-block';
+    up.style.borderColor = '#1a3060';
+    up.style.color = '#93c5fd';
+    up.textContent = ev.user;
+    body.append(ul, up);
+  }
+
+  // LLM response
+  if (ev.response) {
+    const rl = document.createElement('div');
+    const rp = document.createElement('div');
+    rl.className = 'section-label';
+    rl.textContent = 'LLM Response';
+    rp.className = 'response-block';
+    rp.textContent = ev.response;
+    body.append(rl, rp);
+  }
+
+  // Memory extraction result
+  if (ev.extracted) {
+    const ml = document.createElement('div');
+    const mp = document.createElement('div');
+    ml.className = 'section-label';
+    ml.textContent = 'Extracted Data';
+    mp.className = 'meta-block';
+    mp.textContent = JSON.stringify(ev.extracted, null, 2);
+    body.append(ml, mp);
+  }
+
+  // Task operation detail
+  if (ev.detail) {
+    const dl = document.createElement('div');
+    const dp = document.createElement('div');
+    dl.className = 'section-label';
+    dl.textContent = 'Operation';
+    dp.className = 'task-block';
+    dp.textContent = ev.detail;
+    body.append(dl, dp);
+  }
+
+  // Toggle expand
+  header.addEventListener('click', () => {
+    const isOpen = body.classList.toggle('open');
+    icon.classList.toggle('open', isOpen);
+  });
+
+  card.append(header, body);
+  return card;
+}
+
+// ─── Apply Filter ─────────────────────────────────────────────────────
+function applyFilter() {
+  const cards = feed.querySelectorAll('.event-card');
+  cards.forEach(c => {
+    const show = activeFilter === 'all' || c.dataset.filter === activeFilter;
+    c.style.display = show ? '' : 'none';
+  });
+}
+
+// ─── Prepend Event ────────────────────────────────────────────────────
+function addEvent(ev, prepend = true) {
+  if (emptyState.parentElement) emptyState.remove();
+
+  const card = renderCard(ev);
+  const show = activeFilter === 'all' || card.dataset.filter === activeFilter;
+  card.style.display = show ? '' : 'none';
+
+  if (prepend) {
+    feed.insertBefore(card, feed.firstChild);
+  } else {
+    feed.appendChild(card);
+  }
+
+  if (autoScroll && prepend) {
+    feed.scrollTop = 0;
+  }
+
+  updateStats(ev.type);
+}
+
+// ─── Stats ────────────────────────────────────────────────────────────
+function updateStats(type) {
+  const g = filterGroup(type);
+  if (stats[g] !== undefined) stats[g]++;
+  renderStats();
+}
+
+function renderStats() {
+  document.getElementById('s-chat').textContent = stats.chat;
+  document.getElementById('s-memory').textContent = stats.memory;
+  document.getElementById('s-boot').textContent = stats.boot;
+  document.getElementById('s-checkin').textContent = stats.checkin;
+  document.getElementById('s-task').textContent = stats.task_op;
+
+  const total = stats.chat + stats.memory + stats.boot + stats.checkin || 1;
+  ['chat','memory','boot','checkin'].forEach(k => {
+    const pct = Math.round((stats[k] / total) * 100);
+    document.getElementById(`pct-${k}`).textContent = pct + '%';
+    document.getElementById(`bar-${k}`).style.width = pct + '%';
+  });
+
+  const llmCalls = stats.chat + stats.memory + stats.boot + stats.checkin;
+  document.getElementById('llm-count').textContent = llmCalls;
+  document.getElementById('event-count').textContent = allEvents.length;
+}
+
+// ─── Sidebar Tasks ────────────────────────────────────────────────────
+async function refreshSidebarTasks() {
+  try {
+    const r = await fetch('/api/status');
+    const d = await r.json();
+    const el = document.getElementById('sidebar-tasks');
+    const tasks = [...(d.tasks || []), ...(d.aevix_tasks || []), ...(d.targets || [])];
+    if (!tasks.length) {
+      el.innerHTML = '<span class="no-tasks">No active tasks</span>';
+    } else {
+      el.innerHTML = tasks.map(t => `<div class="task-item">${t.title}</div>`).join('');
+    }
+  } catch {}
+}
+
+// ─── Load History ─────────────────────────────────────────────────────
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/monitor');
+    const events = await r.json();
+    allEvents = events;
+    // Events come newest-first from server; render them oldest-first so newest is at top
+    [...events].reverse().forEach(ev => addEvent(ev, true));
+    renderStats();
+  } catch (e) {
+    console.warn('Failed to load monitor history:', e);
+  }
+}
+
+// ─── SSE Live Stream ──────────────────────────────────────────────────
+function connectSSE() {
+  const dot = document.getElementById('live-dot');
+  const status = document.getElementById('conn-status');
+  const es = new EventSource('/api/monitor/stream');
+
+  es.onopen = () => {
+    dot.classList.remove('offline');
+    status.textContent = 'LIVE';
+  };
+
+  es.onmessage = (e) => {
+    try {
+      const ev = JSON.parse(e.data);
+      allEvents.unshift(ev);
+      addEvent(ev, true);
+    } catch {}
+  };
+
+  es.onerror = () => {
+    dot.classList.add('offline');
+    status.textContent = 'RECONNECTING';
+    es.close();
+    setTimeout(connectSSE, 3000);
+  };
+}
+
+// ─── Filter Buttons ───────────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    applyFilter();
+  });
+});
+
+// ─── Auto-scroll Toggle ───────────────────────────────────────────────
+const scrollToggle = document.getElementById('scroll-toggle');
+scrollToggle.addEventListener('click', () => {
+  autoScroll = !autoScroll;
+  scrollToggle.classList.toggle('on', autoScroll);
+});
+
+// ─── Clear ────────────────────────────────────────────────────────────
+document.getElementById('clear-btn').addEventListener('click', () => {
+  allEvents = [];
+  stats = { chat: 0, memory: 0, boot: 0, checkin: 0, task_op: 0 };
+  feed.innerHTML = '';
+  feed.appendChild(emptyState);
+  renderStats();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────
+loadHistory();
+connectSSE();
+refreshSidebarTasks();
+setInterval(refreshSidebarTasks, 30000);
+
+// Update timestamps every 30s
+setInterval(() => {
+  feed.querySelectorAll('.event-time').forEach((el, i) => {
+    if (allEvents[i]) el.textContent = timeAgo(allEvents[i].ts);
+  });
+}, 30000);
+</script>
+</body>
+</html>

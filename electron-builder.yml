@@ -1,0 +1,75 @@
+appId: com.aevix.assistant
+productName: Aevix
+copyright: "Copyright © 2025 Aevix"
+
+directories:
+  output: dist
+  buildResources: assets
+
+files:
+  - "electron/**/*"
+  - "public/**/*"
+  - "index.js"
+  - "agent.js"
+  - "analytics.js"
+  - "aw_client.js"
+  - "prompts.js"
+  - "classifications.json"
+  - "tasks/**/*"
+  - "system/**/*"
+  - "skills/**/*"
+  - "node_modules/**/*"
+  - "package.json"
+  # Exclude dev artifacts
+  - "!.env"
+  - "!.env.*"
+  - "!*.db"
+  - "!*.db-shm"
+  - "!*.db-wal"
+  - "!logs/**"
+  - "!dist/**"
+  - "!.github/**"
+  - "!scripts/**"
+  - "!scratch/**"
+  - "!node_modules/.cache/**"
+  - "!node_modules/electron/**"
+  - "!node_modules/electron-builder/**"
+  - "!node_modules/electron-rebuild/**"
+
+# Native modules and binary vendors must NOT be inside ASAR
+asarUnpack:
+  - "node_modules/better-sqlite3/**/*"
+  - "node_modules/node-notifier/vendor/**/*"
+
+# public/ placed outside ASAR so index.js can read it via AEVIX_APP_ROOT
+extraFiles:
+  - from: "public/"
+    to: "public/"
+
+# ActivityWatch binaries bundled alongside the app
+extraResources:
+  - from: "extraResources/activitywatch/"
+    to: "activitywatch/"
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: "assets/icon.ico"
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: "assets/icon.ico"
+  uninstallerIcon: "assets/icon.ico"
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "Aevix"
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false
+
+publish:
+  provider: github
+  owner: sadidbinhasan
+  repo: aevix
+  releaseType: release

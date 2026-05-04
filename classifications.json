@@ -1,0 +1,15 @@
+{
+  "apps": {
+    "efootball.exe": "distracting",
+    "valorant-win64-shipping.exe": "distracting",
+    "discord.exe": "neutral"
+  },
+  "sites": {
+    "eporner.com": "distracting",
+    "grok.com": "productive",
+    "dashboard.stripe.com": "productive",
+    "gemini.google.com": "productive",
+    "mail.google.com": "neutral",
+    "localhost": "productive"
+  }
+}

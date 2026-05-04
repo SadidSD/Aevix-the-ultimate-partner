@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aevix — Setup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0f;
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+  }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: 4px; color: #00d4ff; margin-bottom: 6px; }
+  .subtitle { color: #64748b; font-size: 12px; letter-spacing: 1px; margin-bottom: 32px; }
+  .card { background: #111118; border: 1px solid #2a2a3a; border-radius: 10px; padding: 28px 32px; width: 100%; max-width: 480px; }
+  .step { display: none; }
+  .step.active { display: block; }
+  .step-title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .step-desc { color: #64748b; font-size: 12px; margin-bottom: 20px; line-height: 1.6; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #94a3b8; text-transform: uppercase; margin-bottom: 6px; }
+  .field input, .field select {
+    width: 100%; padding: 10px 12px;
+    background: #0a0a0f; border: 1px solid #2a2a3a;
+    border-radius: 6px; color: #e2e8f0; font-size: 13px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field select:focus { border-color: #00d4ff; }
+  .provider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .radio-card {
+    border: 2px solid #2a2a3a; border-radius: 8px; padding: 14px 12px;
+    cursor: pointer; transition: all 0.15s; text-align: center;
+  }
+  .radio-card:hover { border-color: #00d4ff44; }
+  .radio-card.selected { border-color: #00d4ff; background: #00d4ff11; }
+  .radio-card input { display: none; }
+  .radio-card .rc-icon { font-size: 22px; margin-bottom: 5px; }
+  .radio-card .rc-name { font-weight: 700; font-size: 13px; }
+  .radio-card .rc-desc { color: #64748b; font-size: 11px; margin-top: 3px; }
+  .btn { width: 100%; padding: 12px; border-radius: 6px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+  .btn-primary { background: #00d4ff; color: #000; }
+  .btn-primary:hover { background: #00b8e0; }
+  .btn-ghost { background: transparent; color: #64748b; border: 1px solid #2a2a3a; }
+  .btn-ghost:hover { color: #e2e8f0; border-color: #64748b; }
+  .test-result { font-size: 11px; margin-top: 6px; padding: 6px 10px; border-radius: 4px; display: none; }
+  .test-result.ok { background: #0a2e1a; color: #22c55e; display: block; }
+  .test-result.err { background: #2a0a0a; color: #ef4444; display: block; }
+  .summary-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1a1a24; font-size: 12px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row span:first-child { color: #64748b; }
+  .summary-row span:last-child { color: #00d4ff; font-weight: 600; }
+  .hint { font-size: 11px; color: #64748b; margin-top: 4px; }
+  .hint a { color: #00d4ff; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="logo">⬡ AEVIX</div>
+<div class="subtitle">FIRST-RUN SETUP</div>
+
+<div class="card">
+
+  <!-- Step 1: Choose Provider -->
+  <div class="step active" id="step-1">
+    <div class="step-title">Choose your AI Provider</div>
+    <div class="step-desc">Select how Aevix should think. You can change this at any time from the chat interface.</div>
+    <div class="provider-grid">
+      <label class="radio-card" id="card-groq">
+        <input type="radio" name="provider" value="groq">
+        <div class="rc-icon">⚡</div>
+        <div class="rc-name">Groq Cloud</div>
+        <div class="rc-desc">Fast & free<br>Needs API key</div>
+      </label>
+      <label class="radio-card" id="card-openai">
+        <input type="radio" name="provider" value="openai">
+        <div class="rc-icon">🤖</div>
+        <div class="rc-name">OpenAI</div>
+        <div class="rc-desc">GPT-4o / GPT-4o-mini<br>Needs API key</div>
+      </label>
+      <label class="radio-card" id="card-anthropic">
+        <input type="radio" name="provider" value="anthropic">
+        <div class="rc-icon">◆</div>
+        <div class="rc-name">Anthropic</div>
+        <div class="rc-desc">Claude models<br>Needs API key</div>
+      </label>
+      <label class="radio-card" id="card-local">
+        <input type="radio" name="provider" value="local">
+        <div class="rc-icon">🖥️</div>
+        <div class="rc-name">Local Model</div>
+        <div class="rc-desc">LM Studio / Ollama<br>Private & offline</div>
+      </label>
+    </div>
+    <button class="btn btn-primary" style="margin-top:20px" onclick="goStep2()">Continue →</button>
+  </div>
+
+  <!-- Step 2: Groq -->
+  <div class="step" id="step-2-groq">
+    <div class="step-title">Groq API Key</div>
+    <div class="step-desc">Get a free key at console.groq.com — stored locally, never sent anywhere else.</div>
+    <div class="field">
+      <label>API Key</label>
+      <input type="password" id="groq-key" placeholder="gsk_...">
+      <div class="hint">Free tier available at <a href="#" onclick="return false">console.groq.com</a></div>
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="groq-model">
+        <option value="llama-3.3-70b-versatile" selected>llama-3.3-70b-versatile — Recommended</option>
+        <option value="llama-3.1-8b-instant">llama-3.1-8b-instant — Fastest</option>
+        <option value="mixtral-8x7b-32768">mixtral-8x7b — Balanced</option>
+      </select>
+    </div>
+    <div id="groq-test-result" class="test-result"></div>
+    <button class="btn btn-primary" onclick="testGroq()">Test & Continue</button>
+    <button class="btn btn-ghost" onclick="skipToSummary()">Skip test</button>
+  </div>
+
+  <!-- Step 2: OpenAI -->
+  <div class="step" id="step-2-openai">
+    <div class="step-title">OpenAI API Key</div>
+    <div class="step-desc">Your key is stored locally on this machine only.</div>
+    <div class="field">
+      <label>API Key</label>
+      <input type="password" id="openai-key" placeholder="sk-...">
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="openai-model">
+        <option value="gpt-4o-mini" selected>gpt-4o-mini — Fast & cheap</option>
+        <option value="gpt-4o">gpt-4o — Most capable</option>
+        <option value="gpt-4-turbo">gpt-4-turbo</option>
+      </select>
+    </div>
+    <div id="openai-test-result" class="test-result"></div>
+    <button class="btn btn-primary" onclick="testOpenAI()">Test & Continue</button>
+    <button class="btn btn-ghost" onclick="skipToSummary()">Skip test</button>
+  </div>
+
+  <!-- Step 2: Anthropic -->
+  <div class="step" id="step-2-anthropic">
+    <div class="step-title">Anthropic API Key</div>
+    <div class="step-desc">Your key is stored locally on this machine only.</div>
+    <div class="field">
+      <label>API Key</label>
+      <input type="password" id="anthropic-key" placeholder="sk-ant-...">
+    </div>
+    <div class="field">
+      <label>Model</label>
+      <select id="anthropic-model">
+        <option value="claude-haiku-4-5-20251001" selected>Claude Haiku — Fast</option>
+        <option value="claude-sonnet-4-6">Claude Sonnet — Balanced</option>
+        <option value="claude-opus-4-7">Claude Opus — Most capable</option>
+      </select>
+    </div>
+    <div id="anthropic-test-result" class="test-result"></div>
+    <button class="btn btn-primary" onclick="testAnthropic()">Test & Continue</button>
+    <button class="btn btn-ghost" onclick="skipToSummary()">Skip test</button>
+  </div>
+
+  <!-- Step 2: Local -->
+  <div class="step" id="step-2-local">
+    <div class="step-title">Local Model Configuration</div>
+    <div class="step-desc">Make sure LM Studio or Ollama is running with its local server enabled.</div>
+    <div class="field">
+      <label>Server URL</label>
+      <input type="text" id="local-url" value="http://localhost:1234/v1" placeholder="http://localhost:1234/v1">
+    </div>
+    <div class="field">
+      <label>Model Name</label>
+      <input type="text" id="local-model" placeholder="e.g. llama3, gemma-4, mistral">
+    </div>
+    <div id="local-test-result" class="test-result"></div>
+    <button class="btn btn-primary" onclick="testLocal()">Test Connection</button>
+    <button class="btn btn-ghost" onclick="skipToSummary()">Skip test</button>
+  </div>
+
+  <!-- Step 3: Summary -->
+  <div class="step" id="step-3">
+    <div class="step-title">Ready to Launch</div>
+    <div class="step-desc">Settings saved. You can switch models anytime from the chat interface.</div>
+    <div id="summary" style="margin-bottom: 20px;"></div>
+    <button class="btn btn-primary" onclick="launch()">Launch Aevix ⬡</button>
+  </div>
+
+</div>
+
+<script>
+  let provider = 'groq';
+
+  document.querySelectorAll('.radio-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      provider = card.querySelector('input').value;
+    });
+  });
+
+  // Select groq by default
+  document.getElementById('card-groq').classList.add('selected');
+
+  function show(id) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  function goStep2() {
+    show(`step-2-${provider}`);
+  }
+
+  async function testGroq() {
+    const key = document.getElementById('groq-key').value.trim();
+    const el = document.getElementById('groq-test-result');
+    if (!key) { el.className = 'test-result err'; el.textContent = '✗ Enter your API key first.'; return; }
+    el.textContent = 'Testing…'; el.style.display = 'block'; el.className = 'test-result';
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/models', { headers: { Authorization: `Bearer ${key}` } });
+      if (r.ok) { el.className = 'test-result ok'; el.textContent = '✓ API key valid!'; setTimeout(skipToSummary, 1000); }
+      else { el.className = 'test-result err'; el.textContent = `✗ Invalid key (${r.status}).`; }
+    } catch { el.className = 'test-result err'; el.textContent = '✗ Network error.'; }
+  }
+
+  async function testOpenAI() {
+    const key = document.getElementById('openai-key').value.trim();
+    const el = document.getElementById('openai-test-result');
+    if (!key) { el.className = 'test-result err'; el.textContent = '✗ Enter your API key first.'; return; }
+    el.textContent = 'Testing…'; el.style.display = 'block'; el.className = 'test-result';
+    try {
+      const r = await fetch('https://api.openai.com/v1/models', { headers: { Authorization: `Bearer ${key}` } });
+      if (r.ok) { el.className = 'test-result ok'; el.textContent = '✓ API key valid!'; setTimeout(skipToSummary, 1000); }
+      else { el.className = 'test-result err'; el.textContent = `✗ Invalid key (${r.status}).`; }
+    } catch { el.className = 'test-result err'; el.textContent = '✗ Network error.'; }
+  }
+
+  async function testAnthropic() {
+    const key = document.getElementById('anthropic-key').value.trim();
+    const el = document.getElementById('anthropic-test-result');
+    if (!key) { el.className = 'test-result err'; el.textContent = '✗ Enter your API key first.'; return; }
+    el.textContent = 'Testing…'; el.style.display = 'block'; el.className = 'test-result';
+    // Anthropic doesn't have a free models endpoint — just validate key format
+    if (key.startsWith('sk-ant-')) {
+      el.className = 'test-result ok'; el.textContent = '✓ Key format valid.'; setTimeout(skipToSummary, 1000);
+    } else {
+      el.className = 'test-result err'; el.textContent = '✗ Anthropic keys start with sk-ant-';
+    }
+  }
+
+  async function testLocal() {
+    const url = document.getElementById('local-url').value.trim();
+    const el = document.getElementById('local-test-result');
+    el.textContent = 'Testing…'; el.style.display = 'block'; el.className = 'test-result';
+    try {
+      const r = await fetch(url.replace(/\/v1$/, '') + '/v1/models');
+      if (r.ok) { el.className = 'test-result ok'; el.textContent = '✓ Server reachable!'; setTimeout(skipToSummary, 1000); }
+      else { el.className = 'test-result err'; el.textContent = `✗ Server error ${r.status}.`; }
+    } catch { el.className = 'test-result err'; el.textContent = '✗ Cannot connect. Is the server running?'; }
+  }
+
+  function skipToSummary() {
+    const s = document.getElementById('summary');
+    const labels = { groq: 'Groq Cloud', openai: 'OpenAI', anthropic: 'Anthropic', local: 'Local (LM Studio/Ollama)' };
+    const modelVal = {
+      groq: document.getElementById('groq-model')?.value,
+      openai: document.getElementById('openai-model')?.value,
+      anthropic: document.getElementById('anthropic-model')?.value,
+      local: document.getElementById('local-model')?.value,
+    }[provider];
+    s.innerHTML = `
+      <div class="summary-row"><span>Provider</span><span>${labels[provider]}</span></div>
+      <div class="summary-row"><span>Model</span><span>${modelVal || 'Default'}</span></div>
+      ${provider !== 'local' ? `<div class="summary-row"><span>API Key</span><span>●●●●●●●●●●●●</span></div>` : ''}
+    `;
+    show('step-3');
+  }
+
+  function launch() {
+    const config = { LLM_PROVIDER: provider };
+    if (provider === 'groq') { config.GROQ_API_KEY = document.getElementById('groq-key').value.trim(); config.GROQ_MODEL = document.getElementById('groq-model').value; }
+    if (provider === 'openai') { config.OPENAI_API_KEY = document.getElementById('openai-key').value.trim(); config.OPENAI_MODEL = document.getElementById('openai-model').value; }
+    if (provider === 'anthropic') { config.ANTHROPIC_API_KEY = document.getElementById('anthropic-key').value.trim(); config.ANTHROPIC_MODEL = document.getElementById('anthropic-model').value; }
+    if (provider === 'local') { config.LOCAL_LLM_URL = document.getElementById('local-url').value.trim(); config.LOCAL_LLM_MODEL = document.getElementById('local-model').value.trim(); }
+    window.wizardBridge.complete(config);
+  }
+</script>
+</body>
+</html>
