@@ -6,6 +6,9 @@ directories:
   output: dist
   buildResources: assets
 
+# Disable ASAR so dynamic import() and Express.static work on real files
+asar: false
+
 files:
   - "electron/**/*"
   - "public/**/*"
@@ -35,16 +38,6 @@ files:
   - "!node_modules/electron/**"
   - "!node_modules/electron-builder/**"
   - "!node_modules/electron-rebuild/**"
-
-# Native modules and binary vendors must NOT be inside ASAR
-asarUnpack:
-  - "node_modules/better-sqlite3/**/*"
-  - "node_modules/node-notifier/vendor/**/*"
-
-# public/ placed outside ASAR so index.js can read it via AEVIX_APP_ROOT
-extraFiles:
-  - from: "public/"
-    to: "public/"
 
 # ActivityWatch binaries bundled alongside the app
 extraResources:
