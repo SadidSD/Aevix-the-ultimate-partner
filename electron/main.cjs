@@ -20,6 +20,17 @@ function initPaths() {
     CONFIG_PATH = path.join(USER_DATA, 'aevix.config.json');
 }
 
+// ─── File logger ──────────────────────────────────────────────────────
+function log(msg) {
+    const line = `[${new Date().toISOString()}] ${msg}\n`;
+    console.log(msg);
+    try {
+        const logPath = path.join(USER_DATA, 'logs', 'aevix-startup.log');
+        fs.mkdirSync(path.dirname(logPath), { recursive: true });
+        fs.appendFileSync(logPath, line, 'utf-8');
+    } catch (_) {}
+}
+
 // ─── JSON Config ──────────────────────────────────────────────────────
 function readConfig() {
     try { return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8')); } catch { return {}; }
@@ -105,9 +116,10 @@ async function startServer() {
 
     try {
         await import(pathToFileURL(path.join(APP_ROOT, 'index.js')).href);
-        console.log('[server] Express started in-process');
+        log('[server] Express started in-process');
     } catch (err) {
-        console.error('[server] Failed to start:', err);
+        log(`[server] Failed to import index.js: ${err.stack || err.message}`);
+        throw err;
     }
 }
 
@@ -153,6 +165,11 @@ function createWindow() {
     mainWindow.setMenuBarVisibility(false);
     mainWindow.loadURL(`http://localhost:${PORT}`);
     mainWindow.once('ready-to-show', () => mainWindow.show());
+    mainWindow.webContents.on('before-input-event', (_, input) => {
+        if (input.control && input.shift && input.key === 'I') {
+            mainWindow.webContents.toggleDevTools();
+        }
+    });
     mainWindow.on('close', ev => { if (!isQuitting) { ev.preventDefault(); mainWindow.hide(); } });
 }
 
@@ -201,12 +218,41 @@ ipcMain.handle('get-version', () => app.getVersion());
 // ─── App lifecycle ────────────────────────────────────────────────────
 app.whenReady().then(async () => {
     initPaths();
+    log(`[main] App starting — userData: ${USER_DATA}`);
+    log(`[main] APP_ROOT: ${APP_ROOT}`);
     bootstrapUserData();
+    log('[main] User data bootstrapped');
     startActivityWatch();
-    if (!hasValidConfig()) await showSetupWizard();
-    await startServer();
-    try { await waitForServer(); } catch (err) { console.error('[main] Server failed to start:', err.message); }
-    createWindow();
+    if (!hasValidConfig()) {
+        log('[main] No valid config — showing setup wizard');
+        await showSetupWizard();
+    }
+    log('[main] Starting Express server');
+    try {
+        await startServer();
+    } catch (err) {
+        log(`[main] startServer threw: ${err.stack || err.message}`);
+    }
+    log('[main] Waiting for server to respond');
+    let serverOk = false;
+    try {
+        await waitForServer();
+        serverOk = true;
+        log('[main] Server is up');
+    } catch (err) {
+        log(`[main] Server did not respond: ${err.message}`);
+        const { dialog } = require('electron');
+        dialog.showErrorBox(
+            'Aevix — Startup Failed',
+            `The backend server did not start.\n\nError: ${err.message}\n\nLog file: ${path.join(USER_DATA, 'logs', 'aevix-startup.log')}\n\nPlease send this log file to support.`
+        );
+        app.quit();
+        return;
+    }
+    if (serverOk) {
+        log('[main] Creating window');
+        createWindow();
+    }
     createTray();
     setupUpdater();
 });
