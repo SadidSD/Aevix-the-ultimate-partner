@@ -8,7 +8,7 @@
         display: none; position: fixed; bottom: 0; left: 0; right: 0;
         background: #0e2a33; border-top: 1px solid #00d4ff44;
         padding: 10px 20px; z-index: 9999;
-        display: flex; align-items: center; justify-content: space-between;
+        align-items: center; justify-content: space-between;
         font-family: monospace; font-size: 12px; color: #e2e8f0;
     `;
     banner.innerHTML = `
