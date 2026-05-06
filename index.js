@@ -196,9 +196,12 @@ app.post('/api/chat', async (req, res) => {
 
     } catch (err) {
         console.error('[API] Graph execution failed:', err.message);
-        // Return degraded response — tasks still readable even if LLM is busy
+        const isRateLimit = /rate.?limit|429|too many requests/i.test(err.message);
+        const errorMsg = isRateLimit
+            ? "API rate limit reached — your provider is throttling requests. Please wait a moment and try again."
+            : "Model busy or unreachable. Please try again in a moment.";
         res.status(503).json({
-            error: "Model busy or unreachable. Try again in a moment, Sir.",
+            error: errorMsg,
             tasks: readTasksFromFile("./tasks/Owner-Tasks.md").filter(t => !t.completed),
             aevix_tasks: readTasksFromFile("./tasks/Aevix-Tasks.md").filter(t => !t.completed),
             targets: readTasksFromFile("./tasks/Targets.md").filter(t => !t.completed)
