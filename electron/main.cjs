@@ -59,8 +59,7 @@ function bootstrapUserData() {
         fs.mkdirSync(path.join(USER_DATA, d), { recursive: true }));
     ['tasks/Owner-Tasks.md','tasks/Aevix-Tasks.md','tasks/Targets.md',
      'system/Identity.md','system/Core-Identity.md','system/Owner-Identity.md',
-     'system/Tools.md','system/Agents.md','system/OpeningFunction.md',
-     'classifications.json'].forEach(f => {
+     'system/Tools.md','system/Agents.md','classifications.json'].forEach(f => {
         const dest = path.join(USER_DATA, f);
         const src  = path.join(APP_ROOT, f);
         if (!fs.existsSync(dest) && fs.existsSync(src)) {
@@ -68,6 +67,18 @@ function bootstrapUserData() {
             fs.copyFileSync(src, dest);
         }
     });
+
+    // Re-trigger onboarding if OpeningFunction.md is absent and Owner-Identity has fewer than 3 facts
+    const openingDest = path.join(USER_DATA, 'system/OpeningFunction.md');
+    const openingSrc  = path.join(APP_ROOT, 'system/OpeningFunction.md');
+    if (!fs.existsSync(openingDest) && fs.existsSync(openingSrc)) {
+        const ownerPath = path.join(USER_DATA, 'system/Owner-Identity.md');
+        const ownerContent = fs.existsSync(ownerPath) ? fs.readFileSync(ownerPath, 'utf-8') : '';
+        const factCount = (ownerContent.match(/\n-/g) || []).length;
+        if (factCount < 3) {
+            fs.copyFileSync(openingSrc, openingDest);
+        }
+    }
 }
 
 // ─── ActivityWatch ────────────────────────────────────────────────────

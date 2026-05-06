@@ -323,7 +323,14 @@ app.get('/api/status', async (_req, res) => {
 
 // Dedicated boot briefing endpoint — skipped during onboarding
 app.get('/api/briefing', async (_req, res) => {
-    if (fs.existsSync('./system/OpeningFunction.md')) return res.json({ briefing: null });
+    if (fs.existsSync('./system/OpeningFunction.md')) {
+        // Returning user who was never properly introduced — show apology before starting onboarding
+        const memoryDb = path.join(process.env.AEVIX_USER_DATA || '.', 'aevix_memory.db');
+        if (fs.existsSync(memoryDb)) {
+            return res.json({ briefing: "My sincerest apologies, Sir — it appears I've misplaced my notes on you entirely. Rather embarrassing, I must admit. Shall we remedy that? I'd like to ask you a few questions so I can serve you properly going forward." });
+        }
+        return res.json({ briefing: null });
+    }
     try {
         const config = { configurable: { thread_id: "local_user_thread" } };
         const briefing = await generateBootBriefing(config);
