@@ -39,7 +39,11 @@ jobs:
         run: |
           $tag = "${{ github.ref_name }}"
           $exe = Get-ChildItem dist\*.exe | Select-Object -First 1
-          gh release create $tag $exe.FullName `
+          $yml = Get-ChildItem dist\latest.yml | Select-Object -First 1
+          $blockmap = Get-ChildItem dist\*.blockmap -ErrorAction SilentlyContinue | Select-Object -First 1
+          $files = @($exe.FullName, $yml.FullName)
+          if ($blockmap) { $files += $blockmap.FullName }
+          gh release create $tag @files `
             --repo ${{ github.repository }} `
             --title "Aevix $tag" `
             --notes "Download **Aevix-Setup-$tag.exe** to install." `
