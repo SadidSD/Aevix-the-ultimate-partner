@@ -68,16 +68,20 @@ function bootstrapUserData() {
         }
     });
 
-    // Re-trigger onboarding if OpeningFunction.md is absent and Owner-Identity has fewer than 3 facts
-    const openingDest = path.join(USER_DATA, 'system/OpeningFunction.md');
-    const openingSrc  = path.join(APP_ROOT, 'system/OpeningFunction.md');
-    if (!fs.existsSync(openingDest) && fs.existsSync(openingSrc)) {
-        const ownerPath = path.join(USER_DATA, 'system/Owner-Identity.md');
-        const ownerContent = fs.existsSync(ownerPath) ? fs.readFileSync(ownerPath, 'utf-8') : '';
-        const factCount = (ownerContent.match(/\n-/g) || []).length;
-        if (factCount < 3) {
-            fs.copyFileSync(openingSrc, openingDest);
+    // Re-trigger onboarding if OpeningFunction.md is absent and onboarding was never completed
+    const openingDest   = path.join(USER_DATA, 'system/OpeningFunction.md');
+    const openingSrc    = path.join(APP_ROOT, 'system/OpeningFunction.md');
+    const markerPath    = path.join(USER_DATA, 'system/.onboarding_complete');
+    // Backfill marker for users who completed onboarding before this marker existed
+    if (!fs.existsSync(markerPath) && !fs.existsSync(openingDest)) {
+        const ownerContent = fs.existsSync(path.join(USER_DATA, 'system/Owner-Identity.md'))
+            ? fs.readFileSync(path.join(USER_DATA, 'system/Owner-Identity.md'), 'utf-8') : '';
+        if ((ownerContent.match(/\n-/g) || []).length >= 1) {
+            fs.writeFileSync(markerPath, new Date().toISOString(), 'utf-8');
         }
+    }
+    if (!fs.existsSync(openingDest) && !fs.existsSync(markerPath) && fs.existsSync(openingSrc)) {
+        fs.copyFileSync(openingSrc, openingDest);
     }
 }
 

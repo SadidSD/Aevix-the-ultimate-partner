@@ -482,6 +482,8 @@ async function memoryReflectorNode(state) {
             if (extracted.onboarding_complete === true || factCount >= 8) {
                 console.log("[Memory] Onboarding complete. Removing OpeningFunction.md");
                 fs.unlinkSync(onboardingPath);
+                // Write completion marker so bootstrap never re-triggers onboarding
+                fs.writeFileSync("./system/.onboarding_complete", new Date().toISOString(), "utf-8");
             }
         }
 
