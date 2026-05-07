@@ -197,7 +197,7 @@ function createWindow() {
 let tray = null;
 
 function createTray() {
-    const iconPath = path.join(APP_ROOT, 'assets', 'tray.ico');
+    const iconPath = path.join(APP_ROOT, 'assets', 'icon.ico');
     const icon = fs.existsSync(iconPath) ? nativeImage.createFromPath(iconPath) : nativeImage.createEmpty();
     tray = new Tray(icon);
     tray.setToolTip('Aevix — Online');
