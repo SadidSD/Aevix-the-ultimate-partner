@@ -221,9 +221,12 @@ function setupUpdater() {
             if (mainWindow) mainWindow.webContents.send('update-downloaded', info);
             tray?.displayBalloon({ iconType: 'info', title: 'Aevix Update Ready', content: `v${info.version} ready. Restart to apply.` });
         });
-        autoUpdater.on('error', err => console.warn('[updater]', err.message));
+        autoUpdater.on('error', err => log(`[updater] ${err.message}`));
         ipcMain.on('install-update', () => { isQuitting = true; autoUpdater.quitAndInstall(true, true); });
-        if (!isDev) setTimeout(() => autoUpdater.checkForUpdatesAndNotify(), 3000);
+        if (!isDev) {
+            setTimeout(() => autoUpdater.checkForUpdatesAndNotify(), 3000);
+            setInterval(() => autoUpdater.checkForUpdatesAndNotify(), 2 * 60 * 60 * 1000);
+        }
     } catch (err) {
         console.warn('[updater] Setup failed:', err.message);
     }
