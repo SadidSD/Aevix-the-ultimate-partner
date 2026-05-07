@@ -68,18 +68,22 @@ function bootstrapUserData() {
         }
     });
 
-    // Re-trigger onboarding if OpeningFunction.md is absent and onboarding was never completed
+    // Onboarding gate — marker file is the single source of truth
     const openingDest   = path.join(USER_DATA, 'system/OpeningFunction.md');
     const openingSrc    = path.join(APP_ROOT, 'system/OpeningFunction.md');
     const markerPath    = path.join(USER_DATA, 'system/.onboarding_complete');
-    // Backfill marker for users who completed onboarding before this marker existed
-    if (!fs.existsSync(markerPath) && !fs.existsSync(openingDest)) {
-        const ownerContent = fs.existsSync(path.join(USER_DATA, 'system/Owner-Identity.md'))
-            ? fs.readFileSync(path.join(USER_DATA, 'system/Owner-Identity.md'), 'utf-8') : '';
-        if ((ownerContent.match(/\n[*-]/g) || []).length >= 1) {
-            fs.writeFileSync(markerPath, new Date().toISOString(), 'utf-8');
-        }
+    const ownerContent  = fs.existsSync(path.join(USER_DATA, 'system/Owner-Identity.md'))
+        ? fs.readFileSync(path.join(USER_DATA, 'system/Owner-Identity.md'), 'utf-8') : '';
+    const factCount     = (ownerContent.match(/\n[*-]/g) || []).length;
+    // If user has a real profile, always treat onboarding as done
+    if (factCount >= 1 && !fs.existsSync(markerPath)) {
+        fs.writeFileSync(markerPath, new Date().toISOString(), 'utf-8');
     }
+    // Remove stale OpeningFunction.md if onboarding is marked complete
+    if (fs.existsSync(openingDest) && fs.existsSync(markerPath)) {
+        fs.unlinkSync(openingDest);
+    }
+    // Re-trigger onboarding only if never completed and file is absent
     if (!fs.existsSync(openingDest) && !fs.existsSync(markerPath) && fs.existsSync(openingSrc)) {
         fs.copyFileSync(openingSrc, openingDest);
     }
