@@ -222,8 +222,14 @@ function setupUpdater() {
         autoUpdater.on('update-not-available', () => {
             tray?.displayBalloon({ iconType: 'info', title: 'Aevix', content: 'You are on the latest version.' });
         });
+        autoUpdater.on('download-progress', ({ percent, bytesPerSecond }) => {
+            const pct = Math.round(percent);
+            const mbps = (bytesPerSecond / 1024 / 1024).toFixed(1);
+            tray?.setToolTip(`Aevix — Downloading update ${pct}% (${mbps} MB/s)`);
+        });
         autoUpdater.on('update-downloaded', info => {
             if (isDev) return;
+            tray?.setToolTip('Aevix — Online');
             if (mainWindow) mainWindow.webContents.send('update-downloaded', info);
             tray?.displayBalloon({ iconType: 'info', title: 'Aevix Update Ready', content: `v${info.version} ready — click Restart Now to install.` });
         });
