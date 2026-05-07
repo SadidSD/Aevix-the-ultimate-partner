@@ -76,7 +76,7 @@ function bootstrapUserData() {
     if (!fs.existsSync(markerPath) && !fs.existsSync(openingDest)) {
         const ownerContent = fs.existsSync(path.join(USER_DATA, 'system/Owner-Identity.md'))
             ? fs.readFileSync(path.join(USER_DATA, 'system/Owner-Identity.md'), 'utf-8') : '';
-        if ((ownerContent.match(/\n-/g) || []).length >= 1) {
+        if ((ownerContent.match(/\n[*-]/g) || []).length >= 1) {
             fs.writeFileSync(markerPath, new Date().toISOString(), 'utf-8');
         }
     }

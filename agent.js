@@ -478,7 +478,7 @@ async function memoryReflectorNode(state) {
         const onboardingPath = "./system/OpeningFunction.md";
         if (fs.existsSync(onboardingPath)) {
             const identityContent = fs.existsSync("./system/Owner-Identity.md") ? fs.readFileSync("./system/Owner-Identity.md", "utf-8") : "";
-            const factCount = (identityContent.match(/\n-/g) || []).length;
+            const factCount = (identityContent.match(/\n[*-]/g) || []).length;
             if (extracted.onboarding_complete === true || factCount >= 8) {
                 console.log("[Memory] Onboarding complete. Removing OpeningFunction.md");
                 fs.unlinkSync(onboardingPath);
