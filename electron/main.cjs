@@ -215,11 +215,17 @@ function setupUpdater() {
         const { autoUpdater } = require('electron-updater');
         autoUpdater.autoDownload = true;
         autoUpdater.autoInstallOnAppQuit = true;
-        autoUpdater.on('update-available', info => { if (mainWindow) mainWindow.webContents.send('update-available', info); });
+        autoUpdater.on('update-available', info => {
+            if (mainWindow) mainWindow.webContents.send('update-available', info);
+            tray?.displayBalloon({ iconType: 'info', title: 'Aevix Update Found', content: `v${info.version} is downloading in the background…` });
+        });
+        autoUpdater.on('update-not-available', () => {
+            tray?.displayBalloon({ iconType: 'info', title: 'Aevix', content: 'You are on the latest version.' });
+        });
         autoUpdater.on('update-downloaded', info => {
             if (isDev) return;
             if (mainWindow) mainWindow.webContents.send('update-downloaded', info);
-            tray?.displayBalloon({ iconType: 'info', title: 'Aevix Update Ready', content: `v${info.version} ready. Restart to apply.` });
+            tray?.displayBalloon({ iconType: 'info', title: 'Aevix Update Ready', content: `v${info.version} ready — click Restart Now to install.` });
         });
         autoUpdater.on('error', err => log(`[updater] ${err.message}`));
         ipcMain.on('install-update', () => { isQuitting = true; autoUpdater.quitAndInstall(true, true); });
